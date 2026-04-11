@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <vector>
+#include <fstream>
 #include <windows.h>
 
 using namespace std;
@@ -29,264 +31,197 @@ public:
         faculty = "Неизвестно";
         course = 1;
         objectCount++;
-        cout << "Вызван конструктор по умолчанию. Объектов: " << objectCount << endl;
     }
 
     // Конструктор с параметрами
     Student(string ln, string fn, string mn, int by,
-            string addr, string ph, string fac, int crs) {
-        lastName = ln;
-        firstName = fn;
-        middleName = mn;
-        birthYear = by;
-        address = addr;
-        phone = ph;
-        faculty = fac;
-        course = crs;
+            string addr, string ph, string fac, int crs)
+        : lastName(ln), firstName(fn), middleName(mn),
+          birthYear(by), address(addr), phone(ph),
+          faculty(fac), course(crs)
+    {
         objectCount++;
-        cout << "Вызван конструктор с параметрами. Объектов: " << objectCount << endl;
     }
 
     // Конструктор копирования
-    Student(const Student& other) {
-        lastName = other.lastName;
-        firstName = other.firstName;
-        middleName = other.middleName;
-        birthYear = other.birthYear;
-        address = other.address;
-        phone = other.phone;
-        faculty = other.faculty;
-        course = other.course;
+    Student(const Student& other)
+        : lastName(other.lastName), firstName(other.firstName),
+          middleName(other.middleName), birthYear(other.birthYear),
+          address(other.address), phone(other.phone),
+          faculty(other.faculty), course(other.course)
+    {
         objectCount++;
-        cout << "Вызван конструктор копирования. Объектов: " << objectCount << endl;
     }
 
     // Деструктор
     ~Student() {
         objectCount--;
-        cout << "Вызван деструктор. Объектов осталось: " << objectCount << endl;
     }
 
-    // set-методы
-    void setLastName(string value) { lastName = value; }
-    void setFirstName(string value) { firstName = value; }
-    void setMiddleName(string value) { middleName = value; }
-    void setBirthYear(int value) { birthYear = value; }
-    void setAddress(string value) { address = value; }
-    void setPhone(string value) { phone = value; }
+    // set
     void setFaculty(string value) { faculty = value; }
     void setCourse(int value) { course = value; }
+    void setAddress(string value) { address = value; }
 
-    // get-методы
+    // get
     string getLastName() const { return lastName; }
-    string getFirstName() const { return firstName; }
-    string getMiddleName() const { return middleName; }
-    int getBirthYear() const { return birthYear; }
-    string getAddress() const { return address; }
-    string getPhone() const { return phone; }
     string getFaculty() const { return faculty; }
     int getCourse() const { return course; }
 
-    // Метод подсчета возраста
+    // возраст
     int getAge(int currentYear) const {
         return currentYear - birthYear;
     }
 
-    // Метод вывода
+    // вывод
     void show() const {
-        cout << "Фамилия: " << lastName << endl;
-        cout << "Имя: " << firstName << endl;
-        cout << "Отчество: " << middleName << endl;
-        cout << "Год рождения: " << birthYear << endl;
-        cout << "Возраст: " << getAge(2025) << endl;
-        cout << "Адрес: " << address << endl;
-        cout << "Телефон: " << phone << endl;
-        cout << "Факультет: " << faculty << endl;
-        cout << "Курс: " << course << endl;
-        cout << "-----------------------------" << endl;
+        cout << lastName << " " << firstName << " " << middleName
+             << " | " << birthYear
+             << " | " << faculty
+             << " | курс: " << course << endl;
     }
 
-    // Получить количество объектов
     static int getObjectCount() {
         return objectCount;
     }
 };
 
-// Инициализация статического поля
 int Student::objectCount = 0;
 
-// Функция с изменением исходного объекта
+// ================= ФУНКЦИИ =================
+
+// изменение (по ссылке)
 void modify_object(Student& s) {
-    s.setFaculty("Измененный_факультет");
+    s.setFaculty("Изменено");
     s.setCourse(s.getCourse() + 1);
-    s.setAddress("Измененный_адрес");
+    s.setAddress("Новый_адрес");
 }
 
-// Функция без изменения исходного объекта
+// не изменение (копия)
 void try_to_modify_object(Student s) {
-    s.setFaculty("Измененный_факультет");
+    s.setFaculty("Изменено");
     s.setCourse(s.getCourse() + 1);
-    s.setAddress("Измененный_адрес");
+    s.setAddress("Новый_адрес");
 
-    cout << "\nОбъект внутри try_to_modify_object():\n";
+    cout << "Внутри функции:\n";
     s.show();
 }
 
-// Демонстрация конструкторов
-void demoConstructors() {
-    cout << "\n===== ДЕМОНСТРАЦИЯ КОНСТРУКТОРОВ =====\n";
+// загрузка из файла
+vector<Student> loadFromFile(const string& filename) {
+    vector<Student> students;
+    ifstream file(filename);
 
-    Student s1;
-    s1.setLastName("Иванов");
-    s1.setFirstName("Иван");
-    s1.setMiddleName("Иванович");
-    s1.setBirthYear(2003);
-    s1.setAddress("Москва");
-    s1.setPhone("89001234567");
-    s1.setFaculty("ФИТ");
-    s1.setCourse(2);
+    if (!file) {
+        cout << "Ошибка открытия файла!\n";
+        return students;
+    }
 
-    cout << "\nОбъект, созданный конструктором по умолчанию:\n";
-    s1.show();
+    string ln, fn, mn, addr, phone, fac;
+    int year, course;
 
-    Student s2("Петров", "Петр", "Петрович", 2002,
-               "Казань", "89001112233", "Эконом", 3);
+    while (file >> ln >> fn >> mn >> year >> addr >> phone >> fac >> course) {
+        students.emplace_back(ln, fn, mn, year, addr, phone, fac, course);
+    }
 
-    cout << "\nОбъект, созданный конструктором с параметрами:\n";
-    s2.show();
-
-    Student s3(s2);
-
-    cout << "\nОбъект, созданный конструктором копирования:\n";
-    s3.show();
-
-    cout << "Текущее количество объектов: " << Student::getObjectCount() << endl;
+    return students;
 }
 
-// Демонстрация modify_object
-void demoModifyObject() {
-    cout << "\n===== ДЕМОНСТРАЦИЯ modify_object =====\n";
+// ================= DEMO =================
 
-    Student s("Иванов", "Иван", "Иванович", 2003,
-              "Москва", "89001234567", "ФИТ", 2);
+void demoAll(const vector<Student>& students) {
+    if (students.empty()) {
+        cout << "Нет данных!\n";
+        return;
+    }
 
-    cout << "\nДо modify_object():\n";
+    cout << "\n===== СПИСОК СТУДЕНТОВ =====\n";
+    for (const auto& s : students) {
+        s.show();
+    }
+
+    cout << "Объектов: " << Student::getObjectCount() << endl;
+}
+
+void demoModify(const vector<Student>& students) {
+    if (students.empty()) return;
+
+    Student s = students[0];
+
+    cout << "\nДо modify:\n";
     s.show();
 
     modify_object(s);
 
-    cout << "После modify_object():\n";
+    cout << "После modify:\n";
     s.show();
 }
 
-// Демонстрация try_to_modify_object
-void demoTryToModifyObject() {
-    cout << "\n===== ДЕМОНСТРАЦИЯ try_to_modify_object =====\n";
+void demoTryModify(const vector<Student>& students) {
+    if (students.empty()) return;
 
-    Student s("Петров", "Петр", "Петрович", 2002,
-              "Казань", "89001112233", "Эконом", 3);
+    Student s = students[0];
 
-    cout << "\nДо try_to_modify_object():\n";
+    cout << "\nДо try:\n";
     s.show();
 
     try_to_modify_object(s);
 
-    cout << "После try_to_modify_object() исходный объект не изменился:\n";
+    cout << "После try (без изменений):\n";
     s.show();
 }
 
-// Классическое создание объектов
-void demoStaticObjects() {
-    cout << "\n===== КЛАССИЧЕСКОЕ СОЗДАНИЕ ОБЪЕКТОВ =====\n";
+void demoDynamic(const vector<Student>& students) {
+    if (students.empty()) return;
 
-    Student s1("Сидоров", "Сидор", "Сидорович", 2004,
-               "Омск", "89005556677", "ФИТ", 1);
+    vector<Student*> ptrs;
 
-    Student s2("Кузнецов", "Алексей", "Сергеевич", 2001,
-               "Томск", "89009998877", "Эконом", 4);
+    for (const auto& s : students) {
+        ptrs.push_back(new Student(s));
+    }
 
-    cout << "\nОбъект 1:\n";
-    s1.show();
+    cout << "\n===== ДИНАМИЧЕСКИЕ ОБЪЕКТЫ =====\n";
 
-    cout << "Объект 2:\n";
-    s2.show();
+    for (auto* p : ptrs) {
+        p->show();
+    }
 
-    cout << "Количество объектов сейчас: " << Student::getObjectCount() << endl;
+    cout << "До удаления: " << Student::getObjectCount() << endl;
+
+    for (auto* p : ptrs) {
+        delete p;
+    }
+
+    cout << "После удаления: " << Student::getObjectCount() << endl;
 }
 
-// Динамическое создание объектов
-void demoDynamicObjects() {
-    cout << "\n===== ДИНАМИЧЕСКОЕ СОЗДАНИЕ И УДАЛЕНИЕ ОБЪЕКТОВ =====\n";
-
-    Student* p1 = new Student("Орлов", "Олег", "Игоревич", 2003,
-                              "Самара", "89006667788", "ФИТ", 2);
-
-    Student* p2 = new Student("Смирнова", "Анна", "Сергеевна", 2004,
-                              "Уфа", "89007778899", "Эконом", 1);
-
-    cout << "\nДинамический объект 1:\n";
-    p1->show();
-
-    cout << "Динамический объект 2:\n";
-    p2->show();
-
-    cout << "Количество объектов до удаления: " << Student::getObjectCount() << endl;
-
-    delete p1;
-    delete p2;
-
-    cout << "Количество объектов после удаления: " << Student::getObjectCount() << endl;
-}
+// MAIN 
 
 int main() {
     SetConsoleCP(65001);
     SetConsoleOutputCP(65001);
 
+    vector<Student> students = loadFromFile("students.txt");
+
     int choice;
 
     do {
-        cout << "\n=========== МЕНЮ ===========\n";
-        cout << "1. Демонстрация конструкторов\n";
-        cout << "2. Демонстрация modify_object\n";
-        cout << "3. Демонстрация try_to_modify_object\n";
-        cout << "4. Классическое создание объектов\n";
-        cout << "5. Динамическое создание и удаление объектов\n";
-        cout << "6. Показать текущее количество объектов\n";
+        cout << "\n===== МЕНЮ =====\n";
+        cout << "1. Показать студентов\n";
+        cout << "2. modify_object\n";
+        cout << "3. try_to_modify_object\n";
+        cout << "4. Динамические объекты\n";
+        cout << "5. Количество объектов\n";
         cout << "0. Выход\n";
-        cout << "Ваш выбор: ";
+        cout << "Выбор: ";
         cin >> choice;
 
-        if (cin.fail()) {
-            cin.clear();
-            cin.ignore(10000, '\n');
-            cout << "Неверный ввод.\n";
-            continue;
-        }
-
         switch (choice) {
-            case 1:
-                demoConstructors();
-                break;
-            case 2:
-                demoModifyObject();
-                break;
-            case 3:
-                demoTryToModifyObject();
-                break;
-            case 4:
-                demoStaticObjects();
-                break;
-            case 5:
-                demoDynamicObjects();
-                break;
-            case 6:
-                cout << "Текущее количество объектов: " << Student::getObjectCount() << endl;
-                break;
-            case 0:
-                cout << "Выход из программы.\n";
-                break;
-            default:
-                cout << "Неверный пункт меню.\n";
+            case 1: demoAll(students); break;
+            case 2: demoModify(students); break;
+            case 3: demoTryModify(students); break;
+            case 4: demoDynamic(students); break;
+            case 5: cout << "Объектов: " << Student::getObjectCount() << endl; break;
         }
 
     } while (choice != 0);
